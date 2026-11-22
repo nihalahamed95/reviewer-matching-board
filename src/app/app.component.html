@@ -1,0 +1,522 @@
+<app-toast></app-toast>
+
+@if (!auth.isAuthenticated()) {
+  <app-login-page></app-login-page>
+} @else {
+  <app-settings-modal></app-settings-modal>
+
+  <div class="lumina-layout">
+    <aside class="dock-rail">
+      <div class="dock-brand">
+        <div class="brand-icon-box">
+          <span class="brand-icon">📚</span>
+        </div>
+      </div>
+
+      <nav class="dock-menu">
+        <button
+          class="dock-item"
+          [class.active]="activeTab() === 'dashboard'"
+          (click)="activeTab.set('dashboard')"
+          title="Dashboard"
+        >
+          <span class="dock-glyph">⊞</span>
+        </button>
+        <button
+          class="dock-item"
+          [class.active]="activeTab() === 'articles'"
+          (click)="activeTab.set('articles')"
+          title="Article Master"
+        >
+          <span class="dock-glyph">📄</span>
+        </button>
+        <button
+          class="dock-item"
+          [class.active]="activeTab() === 'reviewers'"
+          (click)="activeTab.set('reviewers')"
+          title="Reviewer Master"
+        >
+          <span class="dock-glyph">👥</span>
+        </button>
+        <button
+          class="dock-item"
+          (click)="openSettings()"
+          title="Settings & Data"
+        >
+          <span class="dock-glyph">⚙️</span>
+        </button>
+      </nav>
+
+      <div class="dock-footer">
+        <button class="dock-footer-btn" (click)="onLogout()" title="Sign Out">
+          <svg class="logout-icon-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <div class="stage-container">
+      <header class="top-nav-bar">
+        <div class="search-wrapper">
+          <span class="search-lens">🔍</span>
+          <input
+            type="text"
+            placeholder="Search articles, authors, institutions, or keywords..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            class="top-search-input"
+          />
+        </div>
+
+        <div class="top-meta-group">
+          <div class="profile-card" (click)="toggleProfileDropdown()">
+            <div class="avatar-fallback">👤</div>
+            <div class="profile-meta">
+              <strong class="editor-name">{{ auth.currentUser()?.name || 'Editor' }}</strong>
+              <span class="editor-role">{{ auth.currentUser()?.role || 'Managing Editor' }}</span>
+            </div>
+            <span class="caret">⌄</span>
+
+            @if (isProfileDropdownOpen()) {
+              <div class="profile-menu-popover" (click)="$event.stopPropagation()">
+                <div class="popover-header">
+                  <strong>{{ auth.currentUser()?.name }}</strong>
+                  <span>{{ auth.currentUser()?.email }}</span>
+                </div>
+                <button class="popover-action-btn" (click)="openSettings()">
+                  ⚙️ Settings & Data
+                </button>
+                <button class="popover-logout-btn" (click)="onLogout()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </header>
+
+      @if (activeTab() === 'dashboard') {
+        <section class="banner-metrics-grid">
+          <div class="hero-banner-card">
+            <div class="hero-text-side">
+              <div class="ethics-protocol-pill">
+                <span>🛡️ INSTITUTIONAL VALIDATION</span>
+              </div>
+              <h2 class="hero-headline">Reviewer Matching Board</h2>
+              <p class="hero-tagline">
+                Assign peer reviewers while verifying institutional independence.
+              </p>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="meter-circle purple">
+              <span class="meter-val">{{ service.articles().length }}</span>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Articles</span>
+              <strong class="metric-number">{{ service.articles().length }} Total</strong>
+              <span class="metric-sub">In database</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="meter-circle green">
+              <span class="meter-val">{{ service.reviewers().length }}</span>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Reviewers</span>
+              <strong class="metric-number">{{ service.reviewers().length }} Total</strong>
+              <span class="metric-sub">Available</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="meter-circle red">
+              <span class="meter-val">{{ service.stats().conflicts_count }}</span>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Ineligible</span>
+              <strong class="metric-number text-red">{{ service.stats().conflicts_count }} Ineligible</strong>
+              <span class="metric-sub text-red">Same institution</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="meter-box blue">
+              <span class="meter-val">✓</span>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Assignments</span>
+              <strong class="metric-number text-engine">{{ service.stats().assigned_articles }} Assigned</strong>
+              <span class="metric-sub">of {{ service.articles().length }}</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="workspace-split">
+          <section class="manuscripts-column">
+            <div class="column-header">
+              <div class="title-with-count">
+                <h3>Articles</h3>
+                <span class="active-count-pill">{{ displayArticles().length }}</span>
+              </div>
+            </div>
+
+            <div class="manuscript-cards-list">
+              @for (article of displayArticles(); track article.id) {
+                <div
+                  class="manuscript-item-card"
+                  [class.active-focus]="service.selectedArticle()?.id === article.id"
+                  (click)="selectArticle(article)"
+                >
+                  <div class="card-top-meta">
+                    <span class="code-tag">{{ article.id }}</span>
+                    @if (article.assigned_reviewer_id) {
+                      <span class="pill-assigned">✓ Assigned: {{ getReviewerName(article.assigned_reviewer_id) }}</span>
+                    } @else {
+                      <span class="pill-unassigned">Unassigned</span>
+                    }
+                  </div>
+
+                  <h4 class="manuscript-title">{{ article.title }}</h4>
+
+                  <div class="author-line">
+                    <span class="author-name">👤 {{ article.author.name }}</span>
+                    <span class="institution-pill">🏛️ {{ article.author.institution }}</span>
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-text">No articles found.</p>
+              }
+            </div>
+          </section>
+
+          <section class="referee-workspace-column">
+            @if (service.selectedArticle(); as currentArticle) {
+              <div class="target-manuscript-info">
+                <h3 class="target-title">
+                  Match Reviewers for: <span class="highlight-purple">{{ currentArticle.title }}</span>
+                </h3>
+                <p class="target-sub">
+                  Article ID: <strong>{{ currentArticle.id }}</strong> • Author: <strong>{{ currentArticle.author.name }}</strong> ({{ currentArticle.author.institution }})
+                </p>
+              </div>
+
+              <div class="author-baseline-banner">
+                <div class="baseline-icon">🏛️</div>
+                <div class="baseline-text">
+                  <strong>Author Institution: {{ currentArticle.author.institution }}</strong>
+                  <p class="baseline-desc">
+                    Reviewers from <strong>{{ currentArticle.author.institution }}</strong> are ineligible to assign.
+                  </p>
+                </div>
+              </div>
+
+              <div class="referees-block">
+                <div class="referees-block-header">
+                  <h4>Available Reviewers</h4>
+                  <span class="profile-count-pill">{{ displayReviewers().length }} Candidates</span>
+                </div>
+
+                <div class="referee-cards-stack">
+                  @for (reviewer of displayReviewers(); track reviewer.id) {
+                    <div
+                      class="referee-card"
+                      [class.coi-locked-card]="service.hasConflictOfInterest(currentArticle, reviewer)"
+                      [class.verified-independent-card]="!service.hasConflictOfInterest(currentArticle, reviewer)"
+                      [class.assigned-card]="currentArticle.assigned_reviewer_id === reviewer.id"
+                    >
+                      <div class="referee-card-top">
+                        <div class="referee-identity">
+                          <div class="name-status-row">
+                            <strong class="ref-name">{{ reviewer.name }}</strong>
+                            <span class="ref-id-badge">{{ reviewer.id }}</span>
+
+                            @if (service.hasConflictOfInterest(currentArticle, reviewer)) {
+                              <span class="badge-coi-danger">🚫 Ineligible to assign</span>
+                            } @else if (currentArticle.assigned_reviewer_id === reviewer.id) {
+                              <span class="badge-assigned-green">✓ Assigned</span>
+                            } @else {
+                              <span class="badge-verified-green">✓ Eligible</span>
+                            }
+                          </div>
+
+                          <div class="affiliation-line">
+                            <span>🏛️ {{ reviewer.institution }}</span>
+                          </div>
+                        </div>
+
+                        <div class="action-btn-box">
+                          @if (service.hasConflictOfInterest(currentArticle, reviewer)) {
+                            <button class="btn-disabled-ineligible" disabled>
+                              Assign Reviewer
+                            </button>
+                          } @else {
+                            <button
+                              class="btn-purple-assign"
+                              [class.btn-assigned-done]="currentArticle.assigned_reviewer_id === reviewer.id"
+                              [disabled]="service.isAssigning() || (currentArticle.assigned_reviewer_id === reviewer.id)"
+                              (click)="onAssign(reviewer)"
+                            >
+                              @if (service.isAssigning()) {
+                                Assigning...
+                              } @else if (currentArticle.assigned_reviewer_id === reviewer.id) {
+                                ✓ Assigned
+                              } @else {
+                                Assign Reviewer
+                              }
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="referee-chips-row">
+                        @for (kw of reviewer.keywords; track kw) {
+                          <span class="ref-chip">{{ kw }}</span>
+                        }
+                      </div>
+
+                      @if (service.hasConflictOfInterest(currentArticle, reviewer)) {
+                        <div class="ineligible-reason-box">
+                          <strong>Reason:</strong> Ineligible to assign because author ({{ currentArticle.author.name }}) and reviewer ({{ reviewer.name }}) both belong to <strong>{{ reviewer.institution }}</strong>.
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        </div>
+      }
+
+      @if (activeTab() === 'articles') {
+        <div class="master-container">
+          <div class="master-header">
+            <div>
+              <h2 class="master-title">📄 Article Master</h2>
+              <p class="master-sub">Manage academic manuscripts, registered authors, and institutional affiliations.</p>
+            </div>
+            <button class="btn-primary-add" (click)="openAddArticleModal()">
+              ➕ Add New Article
+            </button>
+          </div>
+
+          <div class="master-table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Institution</th>
+                  <th>Assigned Reviewer</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (art of displayArticles(); track art.id) {
+                  <tr>
+                    <td><span class="code-tag">{{ art.id }}</span></td>
+                    <td><strong class="table-title">{{ art.title }}</strong></td>
+                    <td>👤 {{ art.author.name }}</td>
+                    <td><span class="institution-pill">🏛️ {{ art.author.institution }}</span></td>
+                    <td>
+                      @if (art.assigned_reviewer_id) {
+                        <span class="pill-assigned">✓ {{ getReviewerName(art.assigned_reviewer_id) }}</span>
+                      } @else {
+                        <span class="pill-unassigned">Unassigned</span>
+                      }
+                    </td>
+                    <td class="text-right">
+                      <button class="btn-table-delete" (click)="deleteArticle(art.id)" title="Delete Article">
+                        🗑️ Delete
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center py-4">No articles found.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      @if (activeTab() === 'reviewers') {
+        <div class="master-container">
+          <div class="master-header">
+            <div>
+              <h2 class="master-title">👥 Reviewer Master</h2>
+              <p class="master-sub">Manage registered peer reviewers, institutional affiliations, and domain keywords.</p>
+            </div>
+            <button class="btn-primary-add" (click)="openAddReviewerModal()">
+              ➕ Add New Reviewer
+            </button>
+          </div>
+
+          <div class="master-table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Institution</th>
+                  <th>Keywords / Expertise</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (rev of displayReviewers(); track rev.id) {
+                  <tr>
+                    <td><span class="ref-id-badge">{{ rev.id }}</span></td>
+                    <td><strong class="table-title">{{ rev.name }}</strong></td>
+                    <td><span class="institution-pill">🏛️ {{ rev.institution }}</span></td>
+                    <td>
+                      <div class="table-chips">
+                        @for (kw of rev.keywords; track kw) {
+                          <span class="ref-chip">{{ kw }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td class="text-right">
+                      <button class="btn-table-delete" (click)="deleteReviewer(rev.id)" title="Delete Reviewer">
+                        🗑️ Delete
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="text-center py-4">No reviewers found.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (isAddArticleModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddArticleModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="badge-icon">📄</div>
+          <div class="header-titles">
+            <h3>Add New Article</h3>
+            <p>Register a new manuscript in the editorial database.</p>
+          </div>
+          <button class="close-x-btn" (click)="closeAddArticleModal()">✕</button>
+        </div>
+        <form (ngSubmit)="saveArticle()" class="modal-body">
+          <div class="form-group">
+            <label>Article Title *</label>
+            <input
+              type="text"
+              [(ngModel)]="articleTitle"
+              name="title"
+              placeholder="e.g. Graph Neural Networks for Drug Discovery"
+              required
+              class="form-control"
+            />
+          </div>
+          <div class="form-group">
+            <label>Author Name *</label>
+            <input
+              type="text"
+              [(ngModel)]="articleAuthorName"
+              name="authorName"
+              placeholder="e.g. Dr. Alan Turing"
+              required
+              class="form-control"
+            />
+          </div>
+          <div class="form-group">
+            <label>Author Institution *</label>
+            <input
+              type="text"
+              [(ngModel)]="articleAuthorInst"
+              name="authorInst"
+              placeholder="e.g. University of Cambridge"
+              required
+              class="form-control"
+            />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeAddArticleModal()">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="isSavingArticle()">
+              {{ isSavingArticle() ? 'Saving...' : 'Save Article' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isAddReviewerModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddReviewerModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="badge-icon">👥</div>
+          <div class="header-titles">
+            <h3>Add New Reviewer</h3>
+            <p>Add a verified peer reviewer to the referee pool.</p>
+          </div>
+          <button class="close-x-btn" (click)="closeAddReviewerModal()">✕</button>
+        </div>
+        <form (ngSubmit)="saveReviewer()" class="modal-body">
+          <div class="form-group">
+            <label>Reviewer Full Name *</label>
+            <input
+              type="text"
+              [(ngModel)]="reviewerName"
+              name="revName"
+              placeholder="e.g. Prof. Richard Feynman"
+              required
+              class="form-control"
+            />
+          </div>
+          <div class="form-group">
+            <label>Institution *</label>
+            <input
+              type="text"
+              [(ngModel)]="reviewerInst"
+              name="revInst"
+              placeholder="e.g. Caltech"
+              required
+              class="form-control"
+            />
+          </div>
+          <div class="form-group">
+            <label>Keywords / Expertise (Comma-separated)</label>
+            <input
+              type="text"
+              [(ngModel)]="reviewerKeywords"
+              name="revKeywords"
+              placeholder="e.g. Quantum Computing, Physics, Nanotechnology"
+              class="form-control"
+            />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeAddReviewerModal()">Cancel</button>
+            <button type="submit" class="btn-submit" [disabled]="isSavingReviewer()">
+              {{ isSavingReviewer() ? 'Saving...' : 'Save Reviewer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+}
