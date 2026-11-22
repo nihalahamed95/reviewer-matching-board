@@ -1,0 +1,18 @@
+[
+    {
+        "id": "art_101",
+        "title": "Optimizing State Management in Large Angular Applications",
+        "author": {
+            "name": "David Smith",
+            "institution": "Stanford University"
+        }
+    },
+    {
+        "id": "art_102",
+        "title": "A Comparative Study of Modern PHP 8.x Architecture Patterns",
+        "author": {
+            "name": "Maria Garcia",
+            "institution": "University of Toronto"
+        }
+    }
+]

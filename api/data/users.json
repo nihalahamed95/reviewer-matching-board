@@ -1,0 +1,9 @@
+[
+    {
+        "id": "editor_01",
+        "name": "Editor",
+        "email": "editor@straive.com",
+        "role": "Managing Editor",
+        "password": "admin123"
+    }
+]
